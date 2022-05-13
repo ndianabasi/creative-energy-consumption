@@ -7,41 +7,19 @@ const renderText = text => {
   eventLog.appendChild(span)
 }
 
-let documentVisibility = document.visibilityState;
-
-const startTime = performance.now()
-
-document.addEventListener('readystatechange', (event) => {
-  if (document.readyState === 'complete') {
-    if (documentVisibility === 'hidden') {
-      renderText('Ad was not visible during render')
-      return
-    }
-
-    const renderTime = event.timeStamp - startTime
-
-    const watts = 100
-    const renderTimeInHours = (renderTime / (1000 * 60 * 60))
-    const wh = watts * renderTimeInHours
-
-    renderText(`Ad rendered in ${renderTime.toFixed(2)}ms`)
-    renderText(`Energy consumption approximately ${wh.toString().substring(0,7)}Wh`)
-  }
-})
-
-document.addEventListener('visibilitychange', () => {
-  documentVisibility = document.visibilityState;
-})
-
 const observer = new PerformanceObserver((list) => {
-  console.log(list.getEntries());
-  for (const entry of list.getEntries()) {
-    if (entry.initiatorType === "fetch") {
-      console.log('Fetch request detected to', entry.name);
-    }
-  }
+  const entries = list.getEntries()
+  const renderDuration = entries.find(({ entryType }) => entryType === 'navigation').duration
+
+  const watts = 100
+  const renderTimeInHours = (renderDuration / (1000 * 60 * 60))
+  const wh = watts * renderTimeInHours
+
+  renderText(`Ad rendered in ${renderDuration.toFixed(2)}ms`)
+  renderText(`Energy consumption approximately ${wh.toString().substring(0, 7)}Wh`)
+
 });
 
 observer.observe({
-  entryTypes: ['resource']
+  entryTypes: ['resource', 'navigation']
 });
